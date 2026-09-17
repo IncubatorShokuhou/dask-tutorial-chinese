@@ -1,90 +1,89 @@
-# Dask Tutorial
+# Dask 教程（中文）
 
-This tutorial was last given at SciPy 2022 in Austin Texas.
-[A video of the SciPy 2022 tutorial is available online](https://youtu.be/J0NcbvkYPoE).
+这是 [dask/dask-tutorial](https://github.com/dask/dask-tutorial) 的简体中文翻译。本教程最近一次完整讲授是在 SciPy 2022（Austin, Texas）。
+[SciPy 2022 教程视频可在线观看](https://youtu.be/J0NcbvkYPoE)。
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/dask/dask-tutorial/main?urlpath=lab)
-[![Build Status](https://github.com/dask/dask-tutorial/workflows/CI/badge.svg)](https://github.com/dask/dask-tutorial/actions?query=workflow%3ACI)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/IncubatorShokuhou/dask-tutorial-chinese/main?urlpath=lab)
+[![Build Status](https://github.com/IncubatorShokuhou/dask-tutorial-chinese/workflows/CI/badge.svg)](https://github.com/IncubatorShokuhou/dask-tutorial-chinese/actions?query=workflow%3ACI)
 
-Dask is a parallel and distributed computing library that scales the existing Python and PyData ecosystem. Dask can scale up to your full laptop capacity and out to a cloud cluster.
+Dask 是一个并行与分布式计算库，用来扩展现有的 Python 和 PyData 生态。它既能吃满你整台笔记本的算力，也能横向扩展到云上的集群。
 
-## Prepare
+> 英文原版仓库：[dask/dask-tutorial](https://github.com/dask/dask-tutorial)。本仓库会尽量跟上上游的课程结构，并把学习者会看到的说明文字译成通顺的简体中文；代码中的 API、标识符与影响程序行为的字符串保持英文。
 
-#### 1. You should clone this repository
+## 准备工作
 
-    git clone http://github.com/dask/dask-tutorial
+#### 1. 克隆本仓库
 
-and then install necessary packages.
-There are three different ways to achieve this, pick the one that best suits you, and ***only pick one option***.
-They are, in order of preference:
+    git clone https://github.com/IncubatorShokuhou/dask-tutorial-chinese
 
-#### 2a) Create a conda environment (preferred)
+然后安装所需软件包。
+有三种安装方式，请选择最适合你的一种，并且 **只选一种**。
+按推荐顺序为：
 
-In the main repo directory
+#### 2a) 创建 conda 环境（推荐）
+
+在仓库根目录执行：
 
     conda env create -f binder/environment.yml
     conda activate dask-tutorial
 
-#### 2b) Install into an existing environment
+#### 2b) 安装到已有环境
 
-You will need the following core libraries
+你需要以下核心库：
 
     conda install -c conda-forge ipycytoscape jupyterlab python-graphviz matplotlib zarr xarray pooch pyarrow s3fs scipy dask distributed dask-labextension
 
-Note that these options will alter your existing environment, potentially changing the versions of packages you already
-have installed.
+请注意，这种方式会改动你现有环境，可能升级或降级已经安装的软件包。
 
-#### 2c) Use Dockerfile
+#### 2c) 使用 Dockerfile
 
-You can build a docker image from the provided Dockerfile.
+可以用仓库中的 Dockerfile 构建镜像：
 
-    $ docker build . # This will build using the same env as in a)
+    $ docker build .  # 将构建与 2a) 相同的环境
 
-Run a container, replacing the ID with the output of the previous command
+运行容器时，把下面的 ID 换成上一步输出的镜像 ID 或标签：
 
     $ docker run -it -p 8888:8888 -p 8787:8787 <container_id_or_tag>
 
-The above command will give an URL (`Like http://(container_id or 127.0.0.1):8888/?token=<sometoken>`) which
-can be used to access the notebook from browser. You may need to replace the given hostname with "localhost" or
-"127.0.0.1".
+上述命令会给出一个 URL（例如 `http://(container_id 或 127.0.0.1):8888/?token=<sometoken>`），用浏览器打开即可进入 notebook。你可能需要把给出的主机名改成 `localhost` 或 `127.0.0.1`。
 
-#### You should follow only one of the options above!
+#### 请只执行上面的一种方式！
 
-### Launch Jupyter
+### 启动 Jupyter
 
-From the repo directory
+在仓库根目录执行：
 
     jupyter lab
 
-This was already done for method c) and does not need repeating.
+如果用的是方式 2c)，这一步已经完成，不必重复。
 
-You are welcome to use Jupyter notebook if you prefer, but we'll be using lab in the live tutorial.
+现场教程会使用 JupyterLab；如果你更习惯经典 Jupyter Notebook，也可以继续使用。
 
-## Links
+## 链接
 
-*  Reference
-    *  [Docs](https://dask.org/)
-    *  [Examples](https://examples.dask.org/)
-    *  [Code](https://github.com/dask/dask/)
-    *  [Blog](https://blog.dask.org/)
-*  Ask for help
-    *   [`dask`](http://stackoverflow.com/questions/tagged/dask) tag on Stack Overflow, for usage questions
-    *   [github issues](https://github.com/dask/dask/issues/new) for bug reports and feature requests
-    *   [discourse forum](https://dask.discourse.group/) for general, non-bug, questions and discussion
-    *   Attend a live tutorial
+*  参考
+    *  [文档](https://dask.org/)
+    *  [示例](https://examples.dask.org/)
+    *  [代码](https://github.com/dask/dask/)
+    *  [博客](https://blog.dask.org/)
+*  寻求帮助
+    *   Stack Overflow 上的 [`dask`](http://stackoverflow.com/questions/tagged/dask) 标签，适合用法问题
+    *   [GitHub Issues](https://github.com/dask/dask/issues/new) 适合缺陷报告和功能请求
+    *   [Discourse 论坛](https://dask.discourse.group/) 适合一般讨论（非缺陷）
+    *   参加现场教程
 
-## Outline
+## 大纲
 
-0. [Overview](00_overview.ipynb) - dask's place in the universe.
+0. [概述](00_overview.ipynb) — Dask 在整个生态中的位置。
 
-1. [Dataframe](01_dataframe.ipynb) - parallelized operations on many pandas dataframes spread across your cluster.
+1. [DataFrame](01_dataframe.ipynb) — 对散布在集群上的许多 pandas DataFrame 做并行操作。
 
-2. [Array](02_array.ipynb) - blocked numpy-like functionality with a collection of numpy arrays spread across your cluster.
+2. [Array](02_array.ipynb) — 分块的类 NumPy 功能，底层是分布在集群上的许多 numpy 数组。
 
-3. [Delayed](03_dask.delayed.ipynb) - the single-function way to parallelize general python code.
+3. [Delayed](03_dask.delayed.ipynb) — 用单个装饰器并行化一般 Python 代码。
 
-4. [Deployment/Distributed](04_distributed.ipynb) - Dask's scheduler for clusters, with details of how to view the UI.
+4. [部署 / Distributed](04_distributed.ipynb) — Dask 的集群调度器，以及如何查看仪表盘。
 
-5. [Distributed Futures](05_futures.ipynb) - non-blocking results that compute asynchronously.
+5. [Distributed Futures](05_futures.ipynb) — 异步计算、非阻塞地拿到结果。
 
-6. Conclusion
+6. 总结

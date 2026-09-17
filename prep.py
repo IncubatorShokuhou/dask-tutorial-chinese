@@ -17,16 +17,16 @@ data_dir = os.path.abspath(os.path.join(here, "data"))
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser(
-        description="Downloads, generates and prepares data for the Dask tutorial."
+        description="下载、生成并准备 Dask 教程所需的数据。"
     )
     parser.add_argument(
         "--small",
         action="store_true",
         default=None,
-        help="Whether to use smaller example datasets. Checks DASK_TUTORIAL_SMALL environment variable if not specified.",
+        help="是否使用更小的示例数据集。未指定时会检查环境变量 DASK_TUTORIAL_SMALL。",
     )
     parser.add_argument(
-        "-d", "--dataset", choices=DATASETS, help="Datasets to generate.", default="all"
+        "-d", "--dataset", choices=DATASETS, help="要生成的数据集。", default="all"
     )
 
     return parser.parse_args(args)
@@ -34,9 +34,8 @@ def parse_args(args=None):
 
 if not os.path.exists(data_dir):
     raise OSError(
-        "data/ directory not found, aborting data preparation. "
-        'Restore it with "git checkout data" from the base '
-        "directory."
+        "未找到 data/ 目录，已中止数据准备。"
+        '请在仓库根目录执行 "git checkout data" 恢复该目录。'
     )
 
 
@@ -54,13 +53,13 @@ def flights(small=None):
         N = 10_000
 
     if not os.path.exists(flights_raw):
-        print("- Downloading NYC Flights dataset... ", end="", flush=True)
+        print("- 正在下载 NYC Flights 数据集... ", end="", flush=True)
         url = "https://storage.googleapis.com/dask-tutorial-data/nycflights.tar.gz"
         urllib.request.urlretrieve(url, flights_raw)
-        print("done", flush=True)
+        print("完成", flush=True)
 
     if not os.path.exists(flightdir):
-        print("- Extracting flight data... ", end="", flush=True)
+        print("- 正在解压航班数据... ", end="", flush=True)
         tar_path = os.path.join(data_dir, "nycflights.tar.gz")
         with tarfile.open(tar_path, mode="r:gz") as flights:
             flights.extractall("data/")
@@ -73,10 +72,10 @@ def flights(small=None):
                 with open(path, "w") as f:
                     f.writelines(lines)
 
-        print("done", flush=True)
+        print("完成", flush=True)
 
     if not os.path.exists(jsondir):
-        print("- Creating json data... ", end="", flush=True)
+        print("- 正在创建 JSON 数据... ", end="", flush=True)
         os.mkdir(jsondir)
         for path in glob(os.path.join(data_dir, "nycflights", "*.csv")):
             prefix = os.path.splitext(os.path.basename(path))[0]
@@ -86,12 +85,12 @@ def flights(small=None):
                 orient="records",
                 lines=True,
             )
-        print("done", flush=True)
+        print("完成", flush=True)
     else:
         return
 
     end = time.time()
-    print("** Created flights dataset! in {:0.2f}s**".format(end - start))
+    print("** 航班数据集已创建，用时 {:0.2f}s **".format(end - start))
 
 
 def random_array(small=None):
@@ -99,7 +98,7 @@ def random_array(small=None):
         small = bool(os.environ.get("DASK_TUTORIAL_SMALL", False))
 
     t0 = time.time()
-    print("- Generating random array data... ", end="", flush=True)
+    print("- 正在生成随机数组数据... ", end="", flush=True)
     if os.path.exists(os.path.join(data_dir, "random.zarr")) and os.path.exists(
         os.path.join(data_dir, "random_sc.zarr")
     ):
@@ -118,7 +117,7 @@ def random_array(small=None):
     random_arr_small_chunks.to_zarr(os.path.join(data_dir, "random_sc.zarr"))
 
     t1 = time.time()
-    print("** Created random data for array exercise in {:0.2f}s".format(t1 - t0))
+    print("** 数组练习用随机数据已创建，用时 {:0.2f}s".format(t1 - t0))
 
 
 def main(args=None):

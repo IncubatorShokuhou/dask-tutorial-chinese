@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "Dask Tutorial"
+project = "Dask 教程（中文）"
 copyright = "2018, Dask Developers"
 author = "Dask Developers"
 
@@ -50,11 +50,11 @@ nbsphinx_timeout = 600
 nbsphinx_prolog = """
 {% set docname = env.doc2path(env.docname, base=None) %}
 
-You can run this notebook in a `live session <https://mybinder.org/v2/gh/dask/dask-tutorial/main?urlpath=lab/tree/{{
-docname }}>`_ |Binder| or view it `on Github <https://github.com/dask/dask-tutorial/blob/main/{{ docname }}>`_.
+你可以在 `在线实验环境 <https://mybinder.org/v2/gh/IncubatorShokuhou/dask-tutorial-chinese/main?urlpath=lab/tree/{{
+docname }}>`_ 中运行本 notebook |Binder|，或在 `GitHub <https://github.com/IncubatorShokuhou/dask-tutorial-chinese/blob/main/{{ docname }}>`_ 上查看源文件。
 
 .. |Binder| image:: https://static.mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/dask/dask-tutorial/main?urlpath=lab/tree/{{ docname }}
+   :target: https://mybinder.org/v2/gh/IncubatorShokuhou/dask-tutorial-chinese/main?urlpath=lab/tree/{{ docname }}
 """
 
 
@@ -75,7 +75,7 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = "en"
+language = "zh-cn"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -147,7 +147,7 @@ latex_documents = [
     (
         master_doc,
         "DaskTutorial.tex",
-        "Dask Tutorial Documentation",
+        "Dask 教程文档",
         "Dask Developers",
         "manual",
     ),
@@ -158,7 +158,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "dasktutorial", "Dask Tutorial Documentation", [author], 1)]
+man_pages = [(master_doc, "dasktutorial", "Dask 教程文档", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -170,10 +170,10 @@ texinfo_documents = [
     (
         master_doc,
         "DaskTutorial",
-        "Dask Tutorial Documentation",
+        "Dask 教程文档",
         author,
         "DaskTutorial",
-        "One line description of project.",
+        "Dask 简体中文教程。",
         "Miscellaneous",
     ),
 ]
