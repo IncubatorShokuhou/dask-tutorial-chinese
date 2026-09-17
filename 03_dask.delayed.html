@@ -1,0 +1,1517 @@
+
+<!DOCTYPE html>
+
+
+<html lang="zh-cn" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>dask.delayed —— 并行化任意代码 &#8212; Dask 教程（中文）  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/css/style.css?v=f0d2d131" />
+    <link rel="stylesheet" type="text/css" href="_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="_static/documentation_options.js?v=aa2e667b"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '03_dask.delayed';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Distributed —— 把数据和计算铺到集群上" href="04_distributed.html" />
+    <link rel="prev" title="Dask Arrays —— 并行化的 numpy" href="02_array.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="zh-cn"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+<nav class="dask-nav container-fluid">
+  <ul>
+    <li class="logo">
+      <a href="https://docs.dask.org/">
+        <img
+          class="caption"
+          src="_static/images/dask-horizontal-white.svg"
+        />
+      </a>
+    </li>
+
+    <li>
+      <a href="https://docs.dask.org/">Dask</a>
+    </li>
+
+    <li>
+      <a href="https://distributed.dask.org/">Distributed</a>
+    </li>
+
+    <li>
+      <a href="https://ml.dask.org/">Dask ML</a>
+    </li>
+
+    <li>
+      <a href="https://examples.dask.org/">Examples</a>
+    </li>
+
+    <li>
+      <a href="https://docs.dask.org/en/latest/ecosystem.html">Ecosystem</a>
+    </li>
+
+    <li>
+      <a href="https://docs.dask.org/en/latest/support.html">Community</a>
+    </li>
+  </ul>
+</nav>
+
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="_static/images/dask-horizontal-white.svg">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Dask 教程（中文）  documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="00_overview.html">欢迎来到 Dask 教程</a></li>
+<li class="toctree-l1"><a class="reference internal" href="01_dataframe.html">Dask DataFrame —— 并行化的 pandas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_array.html">Dask Arrays —— 并行化的 numpy</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">dask.delayed —— 并行化任意代码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_distributed.html">Distributed —— 把数据和计算铺到集群上</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_futures.html">Futures —— 非阻塞的分布式计算</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/03_dask.delayed.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>dask.delayed —— 并行化任意代码</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#一个典型工作流">一个典型工作流</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#基础">基础</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#用-dask.delayed-装饰器并行化">用 <code class="docutils literal notranslate"><span class="pre">dask.delayed</span></code> 装饰器并行化</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#刚才发生了什么？">刚才发生了什么？</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#几个值得思考的问题：">几个值得思考的问题：</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#练习：并行化-for-循环">练习：并行化 for 循环</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#练习：带控制流的-for-循环并行化">练习：带控制流的 for 循环并行化</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">几个值得思考的问题：</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#练习：并行化-Pandas-的-groupby-归约">练习：并行化 Pandas 的 groupby 归约</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#准备数据">准备数据</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#查看数据">查看数据</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#用-pandas.read_csv-读取一个文件，并计算平均起飞延误">用 <code class="docutils literal notranslate"><span class="pre">pandas.read_csv</span></code> 读取一个文件，并计算平均起飞延误</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#顺序代码：每个机场的平均起飞延误">顺序代码：每个机场的平均起飞延误</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#把上面的代码并行化">把上面的代码并行化</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">几个值得思考的问题：</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#进一步学习">进一步学习</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#关闭-Client">关闭 Client</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <p>你可以在 <a class="reference external" href="https://mybinder.org/v2/gh/IncubatorShokuhou/dask-tutorial-chinese/main?urlpath=lab/tree/03_dask.delayed.ipynb">在线实验环境</a> 中运行本 notebook <a class="reference external" href="https://mybinder.org/v2/gh/IncubatorShokuhou/dask-tutorial-chinese/main?urlpath=lab/tree/03_dask.delayed.ipynb"><img alt="Binder" src="https://static.mybinder.org/badge_logo.svg" /></a>，或在 <a class="reference external" href="https://github.com/IncubatorShokuhou/dask-tutorial-chinese/blob/main/03_dask.delayed.ipynb">GitHub</a> 上查看源文件。</p>
+<p><img alt="Dask logo\" class="no-scaled-link" src="https://docs.dask.org/en/latest/_images/dask_horizontal.svg" style="width: 30%;" /></p>
+<section id="dask.delayed-——-并行化任意代码">
+<h1>dask.delayed —— 并行化任意代码<a class="headerlink" href="#dask.delayed-——-并行化任意代码" title="Link to this heading">#</a></h1>
+<p>如果你手头没有 array 或 dataframe 呢？不必再按块套用函数，你可以用 <code class="docutils literal notranslate"><span class="pre">&#64;delayed</span></code> 装饰函数，<strong>让函数本身变成惰性的</strong>。</p>
+<p>这是用 <code class="docutils literal notranslate"><span class="pre">dask</span></code> 并行化现有代码库、或构建<a class="reference external" href="https://blog.dask.org/2018/02/09/credit-models-with-dask">更复杂系统</a> 的一种简单方式。</p>
+<p><strong>相关文档</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.dask.org/en/latest/delayed.html">Delayed 文档</a></p></li>
+<li><p><a class="reference external" href="https://www.youtube.com/watch?v=SHqFmynRxVU">Delayed 视频</a></p></li>
+<li><p><a class="reference external" href="https://docs.dask.org/en/latest/delayed-api.html">Delayed API</a></p></li>
+<li><p><a class="reference external" href="https://examples.dask.org/delayed.html">Delayed 示例</a></p></li>
+<li><p><a class="reference external" href="https://docs.dask.org/en/latest/delayed-best-practices.html">Delayed 最佳实践</a></p></li>
+</ul>
+<p>正如我们会在<a class="reference internal" href="04_distributed.html"><span class="doc">分布式调度器这一节</span></a>看到的，Dask 有多种并行执行代码的方式。这里先创建一个 <code class="docutils literal notranslate"><span class="pre">dask.distributed.Client</span></code>，用分布式调度器跑起来。目前主要是为了拿到更好的诊断信息；调度器后面会详细讲。</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dask.distributed</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">n_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<section id="一个典型工作流">
+<h2>一个典型工作流<a class="headerlink" href="#一个典型工作流" title="Link to this heading">#</a></h2>
+<p>工作流里如果有 for 循环，通常就能从 delayed 中受益。下面是一个“读取—变换—写出”的例子：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dask</span>
+
+<span class="nd">@dask</span><span class="o">.</span><span class="n">delayed</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">read_a_file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">do_a_transformation</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">destination</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"results/</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">write_out_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">destination</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">destination</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">process_file</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+
+<span class="n">dask</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="基础">
+<h2>基础<a class="headerlink" href="#基础" title="Link to this heading">#</a></h2>
+<p>先写两个玩具函数 <code class="docutils literal notranslate"><span class="pre">inc</span></code> 和 <code class="docutils literal notranslate"><span class="pre">add</span></code>，让它们 <code class="docutils literal notranslate"><span class="pre">sleep</span></code> 一会儿来模拟耗时工作。然后给这段普通代码计时。</p>
+<p>下一小节再把它并行化。</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">sleep</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">inc</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+</pre></div>
+</div>
+</div>
+<p>我们用 Jupyter Notebook 的特殊功能 <code class="docutils literal notranslate"><span class="pre">%%time</span></code> 魔法来给这段普通代码计时。</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="c1"># 这段要跑大约三秒，因为我们按顺序、一个接一个地调用函数</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">inc</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">inc</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+CPU times: user 57.6 ms, sys: 15 ms, total: 72.5 ms
+Wall time: 3 s
+</pre></div></div>
+</div>
+<section id="用-dask.delayed-装饰器并行化">
+<h3>用 <code class="docutils literal notranslate"><span class="pre">dask.delayed</span></code> 装饰器并行化<a class="headerlink" href="#用-dask.delayed-装饰器并行化" title="Link to this heading">#</a></h3>
+<p>那两次 <code class="docutils literal notranslate"><span class="pre">inc</span></code> 调用彼此完全独立，<strong>本来就可以并行</strong>。</p>
+<p>我们用 <code class="docutils literal notranslate"><span class="pre">dask.delayed</span></code> 装饰器把 <code class="docutils literal notranslate"><span class="pre">inc</span></code> 和 <code class="docutils literal notranslate"><span class="pre">add</span></code> 变成惰性函数。调用方式和原来完全一样，传入参数后，原函数其实还没执行——所以这个单元格会很快结束。 取而代之的是得到一个 <em>delayed 对象</em>，它记下了“要调用哪个函数、传哪些参数”。</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dask</span>
+
+
+<span class="nd">@dask</span><span class="o">.</span><span class="n">delayed</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">inc</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
+
+
+<span class="nd">@dask</span><span class="o">.</span><span class="n">delayed</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="c1"># 这会立刻返回，它只是在构建任务图</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">inc</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">inc</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+CPU times: user 176 μs, sys: 62 μs, total: 238 μs
+Wall time: 223 μs
+</pre></div></div>
+</div>
+<p>之所以立刻结束，是因为真正的计算还没发生。</p>
+<p>要拿到结果，调用 <code class="docutils literal notranslate"><span class="pre">compute</span></code>。注意它会比原来的顺序代码更快。</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="c1"># 这次才会用本地线程池真正执行计算</span>
+
+<span class="n">z</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+CPU times: user 106 ms, sys: 18.2 ms, total: 124 ms
+Wall time: 2.08 s
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+5
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="刚才发生了什么？">
+<h2>刚才发生了什么？<a class="headerlink" href="#刚才发生了什么？" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">z</span></code> 是一个惰性的 <code class="docutils literal notranslate"><span class="pre">Delayed</span></code> 对象。它保存了算出最终结果所需的一切：相关函数、输入，以及它们之间的依赖关系。我们可以像上面那样用 <code class="docutils literal notranslate"><span class="pre">.compute()</span></code> 求值，也可以用 <code class="docutils literal notranslate"><span class="pre">.visualize()</span></code> 画出这个值对应的任务图。</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">z</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Delayed(&#39;add-3d9c5e0e-3e4f-46f9-9ec3-c2bb51d7a976&#39;)
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># 查看 `z` 的任务图</span>
+<span class="n">z</span><span class="o">.</span><span class="n">visualize</span><span class="p">()</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="_images/03_dask.delayed_15_0.png" src="_images/03_dask.delayed_15_0.png" />
+</div>
+</div>
+<p>注意图里出现了前面那些函数的名字，以及 <code class="docutils literal notranslate"><span class="pre">inc</span></code> 的输出如何流入 <code class="docutils literal notranslate"><span class="pre">add</span></code> 的输入。</p>
+<section id="几个值得思考的问题：">
+<h3>几个值得思考的问题：<a class="headerlink" href="#几个值得思考的问题：" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>为什么从 3 秒变成了 2 秒？为什么没法并行到 1 秒？</p></li>
+<li><p>如果 <code class="docutils literal notranslate"><span class="pre">inc</span></code> 和 <code class="docutils literal notranslate"><span class="pre">add</span></code> 里没有 <code class="docutils literal notranslate"><span class="pre">sleep(1)</span></code>，会发生什么？Dask 还能加速这段代码吗？</p></li>
+<li><p>如果我们有多个输出，或者也想拿到 <code class="docutils literal notranslate"><span class="pre">x</span></code> 或 <code class="docutils literal notranslate"><span class="pre">y</span></code>，该怎么办？</p></li>
+</ul>
+</section>
+</section>
+<section id="练习：并行化-for-循环">
+<h2>练习：并行化 for 循环<a class="headerlink" href="#练习：并行化-for-循环" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">for</span></code> 循环是我们最常想并行化的结构之一。请对下面的 <code class="docutils literal notranslate"><span class="pre">inc</span></code> 和 <code class="docutils literal notranslate"><span class="pre">sum</span></code> 使用 <code class="docutils literal notranslate"><span class="pre">dask.delayed</span></code>，把这段计算并行化：</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="c1"># 顺序执行的代码</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">inc</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
+
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">inc</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+<span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+CPU times: user 159 ms, sys: 27.7 ms, total: 187 ms
+Wall time: 8.01 s
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">total</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+44
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="c1"># 在此编写你的并行代码...</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+CPU times: user 1e+03 ns, sys: 1e+03 ns, total: 2 μs
+Wall time: 3.81 μs
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@dask</span><span class="o">.</span><span class="n">delayed</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">inc</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
+
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">inc</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+<span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"计算前:"</span><span class="p">,</span> <span class="n">total</span><span class="p">)</span>  <span class="c1"># 看看 total 现在是什么类型</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">total</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"计算后:"</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>  <span class="c1"># 真正计算之后</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+计算前: Delayed(&#39;add-997f42509483521c8fccec0dc35439d7&#39;)
+计算后: 44
+</pre></div></div>
+</div>
+<p>对比一下：直接使用 <code class="docutils literal notranslate"><span class="pre">sum</span></code>、以及把 <code class="docutils literal notranslate"><span class="pre">sum</span></code> 也用 <code class="docutils literal notranslate"><span class="pre">delayed</span></code> 包起来，两种做法的任务图有什么不同？你能解释后一种吗？下面这个表达式的结果或许会有启发：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">inc</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">inc</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="练习：带控制流的-for-循环并行化">
+<h2>练习：带控制流的 for 循环并行化<a class="headerlink" href="#练习：带控制流的-for-循环并行化" title="Link to this heading">#</a></h2>
+<p>我们常常只想延迟 <em>一部分</em> 函数，让另外一些立刻执行。当那些函数很快、并且能帮我们决定接下来该调用哪些更慢的函数时，这一点特别有用。用 <code class="docutils literal notranslate"><span class="pre">dask.delayed</span></code> 时，最需要动脑的通常就是：延迟还是不延迟。</p>
+<p>下面的例子会遍历一组输入。如果输入是偶数就调用 <code class="docutils literal notranslate"><span class="pre">inc</span></code>，如果是奇数就调用 <code class="docutils literal notranslate"><span class="pre">double</span></code>。这个 <code class="docutils literal notranslate"><span class="pre">is_even</span></code> 判断必须立刻做完（不能惰性），这样构建任务图的 Python 代码才能继续往下走。</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">double</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">is_even</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">2</span>
+
+
+<span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="c1"># 顺序执行的代码</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">is_even</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">double</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">inc</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+<span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Delayed(&#39;add-c510cb5e94700cd52471fc65b90d4ac9&#39;)
+CPU times: user 94.1 ms, sys: 22.1 ms, total: 116 ms
+Wall time: 5.01 s
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="c1"># 在此编写你的并行代码...</span>
+<span class="c1"># TODO: 用 dask.delayed 把上面的顺序代码并行化</span>
+<span class="c1"># 你需要延迟一部分函数，但不是全部</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+CPU times: user 2 μs, sys: 1e+03 ns, total: 3 μs
+Wall time: 4.05 μs
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@dask</span><span class="o">.</span><span class="n">delayed</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">double</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span>
+
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">is_even</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>  <span class="c1"># 偶数</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">double</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># 奇数</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">inc</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+<span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">time</span> total.compute()
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+CPU times: user 83.7 ms, sys: 12.5 ms, total: 96.1 ms
+Wall time: 3.04 s
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+90
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">total</span><span class="o">.</span><span class="n">visualize</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="_images/03_dask.delayed_31_0.png" src="_images/03_dask.delayed_31_0.png" />
+</div>
+</div>
+<section id="id8">
+<h3>几个值得思考的问题：<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>还有哪些控制流场景没法使用 delayed？</p></li>
+<li><p>如果把上面例子里的 <code class="docutils literal notranslate"><span class="pre">is_even(x)</span></code> 也延迟求值，会发生什么？</p></li>
+<li><p>你觉得该不该延迟 <code class="docutils literal notranslate"><span class="pre">sum</span></code>？这个函数既有计算量，又跑得很快。</p></li>
+</ul>
+</section>
+</section>
+<section id="练习：并行化-Pandas-的-groupby-归约">
+<h2>练习：并行化 Pandas 的 groupby 归约<a class="headerlink" href="#练习：并行化-Pandas-的-groupby-归约" title="Link to this heading">#</a></h2>
+<p>这个练习会读取多个 CSV，并并行做 groupby。我们先给出顺序代码，再用 <code class="docutils literal notranslate"><span class="pre">dask.delayed</span></code> 并行化。</p>
+<p>要并行的计算是：根据一些历史航班数据，求每个机场的平均起飞延误。我们会把 <code class="docutils literal notranslate"><span class="pre">dask.delayed</span></code> 和 <code class="docutils literal notranslate"><span class="pre">pandas</span></code> 搭配使用。本教程前面的 DataFrame 章节已经用 <code class="docutils literal notranslate"><span class="pre">dask.dataframe</span></code> 做过类似的事。</p>
+</section>
+<section id="准备数据">
+<h2>准备数据<a class="headerlink" href="#准备数据" title="Link to this heading">#</a></h2>
+<p>运行下面的代码来准备数据。</p>
+<p>这会下载并解压 1990–2000 年从纽约出发的历史航班数据。原始数据来自<a class="reference external" href="http://stat-computing.org/dataexpo/2009/the-data.html">这里</a>。</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">run</span> prep.py -d flights
+</pre></div>
+</div>
+</div>
+<section id="查看数据">
+<h3>查看数据<a class="headerlink" href="#查看数据" title="Link to this heading">#</a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"data"</span><span class="p">,</span> <span class="s2">"nycflights"</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;1990.csv&#39;,
+ &#39;1991.csv&#39;,
+ &#39;1992.csv&#39;,
+ &#39;1993.csv&#39;,
+ &#39;1994.csv&#39;,
+ &#39;1995.csv&#39;,
+ &#39;1996.csv&#39;,
+ &#39;1997.csv&#39;,
+ &#39;1998.csv&#39;,
+ &#39;1999.csv&#39;]
+</pre></div></div>
+</div>
+</section>
+<section id="用-pandas.read_csv-读取一个文件，并计算平均起飞延误">
+<h3>用 <code class="docutils literal notranslate"><span class="pre">pandas.read_csv</span></code> 读取一个文件，并计算平均起飞延误<a class="headerlink" href="#用-pandas.read_csv-读取一个文件，并计算平均起飞延误" title="Link to this heading">#</a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"data"</span><span class="p">,</span> <span class="s2">"nycflights"</span><span class="p">,</span> <span class="s2">"1990.csv"</span><span class="p">))</span>
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Year</th>
+      <th>Month</th>
+      <th>DayofMonth</th>
+      <th>DayOfWeek</th>
+      <th>DepTime</th>
+      <th>CRSDepTime</th>
+      <th>ArrTime</th>
+      <th>CRSArrTime</th>
+      <th>UniqueCarrier</th>
+      <th>FlightNum</th>
+      <th>...</th>
+      <th>AirTime</th>
+      <th>ArrDelay</th>
+      <th>DepDelay</th>
+      <th>Origin</th>
+      <th>Dest</th>
+      <th>Distance</th>
+      <th>TaxiIn</th>
+      <th>TaxiOut</th>
+      <th>Cancelled</th>
+      <th>Diverted</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1990</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1621.0</td>
+      <td>1540</td>
+      <td>1747.0</td>
+      <td>1701</td>
+      <td>US</td>
+      <td>33</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>46.0</td>
+      <td>41.0</td>
+      <td>EWR</td>
+      <td>PIT</td>
+      <td>319.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1990</td>
+      <td>1</td>
+      <td>2</td>
+      <td>2</td>
+      <td>1547.0</td>
+      <td>1540</td>
+      <td>1700.0</td>
+      <td>1701</td>
+      <td>US</td>
+      <td>33</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>-1.0</td>
+      <td>7.0</td>
+      <td>EWR</td>
+      <td>PIT</td>
+      <td>319.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1990</td>
+      <td>1</td>
+      <td>3</td>
+      <td>3</td>
+      <td>1546.0</td>
+      <td>1540</td>
+      <td>1710.0</td>
+      <td>1701</td>
+      <td>US</td>
+      <td>33</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>9.0</td>
+      <td>6.0</td>
+      <td>EWR</td>
+      <td>PIT</td>
+      <td>319.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1990</td>
+      <td>1</td>
+      <td>4</td>
+      <td>4</td>
+      <td>1542.0</td>
+      <td>1540</td>
+      <td>1710.0</td>
+      <td>1701</td>
+      <td>US</td>
+      <td>33</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>9.0</td>
+      <td>2.0</td>
+      <td>EWR</td>
+      <td>PIT</td>
+      <td>319.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1990</td>
+      <td>1</td>
+      <td>5</td>
+      <td>5</td>
+      <td>1549.0</td>
+      <td>1540</td>
+      <td>1706.0</td>
+      <td>1701</td>
+      <td>US</td>
+      <td>33</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>5.0</td>
+      <td>9.0</td>
+      <td>EWR</td>
+      <td>PIT</td>
+      <td>319.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 23 columns</p>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># 数据模式（schema）是什么样的？</span>
+<span class="n">df</span><span class="o">.</span><span class="n">dtypes</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Year                   int64
+Month                  int64
+DayofMonth             int64
+DayOfWeek              int64
+DepTime              float64
+CRSDepTime             int64
+ArrTime              float64
+CRSArrTime             int64
+UniqueCarrier         object
+FlightNum              int64
+TailNum              float64
+ActualElapsedTime    float64
+CRSElapsedTime         int64
+AirTime              float64
+ArrDelay             float64
+DepDelay             float64
+Origin                object
+Dest                  object
+Distance             float64
+TaxiIn               float64
+TaxiOut              float64
+Cancelled              int64
+Diverted               int64
+dtype: object
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># 数据里有哪些出发机场？</span>
+<span class="n">df</span><span class="o">.</span><span class="n">Origin</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([&#39;EWR&#39;, &#39;LGA&#39;, &#39;JFK&#39;], dtype=object)
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># 某一年、按出发机场分组的平均起飞延误</span>
+<span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Origin"</span><span class="p">)</span><span class="o">.</span><span class="n">DepDelay</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Origin
+EWR    10.854962
+JFK    17.027397
+LGA    10.895592
+Name: DepDelay, dtype: float64
+</pre></div></div>
+</div>
+</section>
+<section id="顺序代码：每个机场的平均起飞延误">
+<h3>顺序代码：每个机场的平均起飞延误<a class="headerlink" href="#顺序代码：每个机场的平均起飞延误" title="Link to this heading">#</a></h3>
+<p>上一格算的是某一年、按机场分组的平均起飞延误。这里用顺序 for 循环扩展到所有年份。</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">glob</span><span class="w"> </span><span class="kn">import</span> <span class="n">glob</span>
+
+<span class="n">filenames</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"data"</span><span class="p">,</span> <span class="s2">"nycflights"</span><span class="p">,</span> <span class="s2">"*.csv"</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+
+<span class="n">sums</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
+    <span class="c1"># 读入文件</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="c1"># 按出发机场分组</span>
+    <span class="n">by_origin</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Origin"</span><span class="p">)</span>
+
+    <span class="c1"># 按出发地汇总起飞延误</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">by_origin</span><span class="o">.</span><span class="n">DepDelay</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="c1"># 按出发地统计航班数</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">by_origin</span><span class="o">.</span><span class="n">DepDelay</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+    <span class="c1"># 保存中间结果</span>
+    <span class="n">sums</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
+    <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+
+<span class="c1"># 合并中间结果，得到每个出发地的总平均延误</span>
+<span class="n">total_delays</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sums</span><span class="p">)</span>
+<span class="n">n_flights</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+<span class="n">mean</span> <span class="o">=</span> <span class="n">total_delays</span> <span class="o">/</span> <span class="n">n_flights</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+CPU times: user 30.7 ms, sys: 1.05 ms, total: 31.7 ms
+Wall time: 31 ms
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mean</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Origin
+EWR    12.500968
+JFK          NaN
+LGA    10.169227
+Name: DepDelay, dtype: float64
+</pre></div></div>
+</div>
+</section>
+<section id="把上面的代码并行化">
+<h3>把上面的代码并行化<a class="headerlink" href="#把上面的代码并行化" title="Link to this heading">#</a></h3>
+<p>用 <code class="docutils literal notranslate"><span class="pre">dask.delayed</span></code> 并行化上面的代码。你还需要知道几点：</p>
+<ol class="arabic simple">
+<li><p>delayed 对象上的方法和属性访问会自动工作：如果你有一个 delayed 对象，可以对它做普通算术、切片和方法调用，它会生成正确的延迟调用。</p></li>
+<li><p>只有一个输出时，调用 <code class="docutils literal notranslate"><span class="pre">.compute()</span></code> 就很好用。有多个输出时，更适合用 <code class="docutils literal notranslate"><span class="pre">dask.compute</span></code> 函数，这样 Dask 可以共享中间值。</p></li>
+</ol>
+<p>你的目标是用 <code class="docutils literal notranslate"><span class="pre">dask.delayed</span></code> 并行化下面这段（从上面复制而来的）代码。你也可以可视化一下计算过程，确认自己做得对不对。</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="c1"># 在此编写代码</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+CPU times: user 1 μs, sys: 0 ns, total: 1 μs
+Wall time: 3.81 μs
+</pre></div></div>
+</div>
+<p>如果加载了参考答案，请在单元格顶部加上 <code class="docutils literal notranslate"><span class="pre">%%time</span></code> 来测量运行时间。</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+
+<span class="c1"># 这只是一种可能的写法，用 `dask.delayed` 还有好几种做法</span>
+
+
+<span class="nd">@dask</span><span class="o">.</span><span class="n">delayed</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="c1"># 读入文件</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+
+<span class="n">sums</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
+    <span class="c1"># 延迟读取文件</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">read_file</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="c1"># 按出发机场分组</span>
+    <span class="n">by_origin</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Origin"</span><span class="p">)</span>
+
+    <span class="c1"># 按出发地汇总起飞延误</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">by_origin</span><span class="o">.</span><span class="n">DepDelay</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="c1"># 按出发地统计航班数</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">by_origin</span><span class="o">.</span><span class="n">DepDelay</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+    <span class="c1"># 保存中间结果</span>
+    <span class="n">sums</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
+    <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+
+<span class="c1"># 合并中间结果，得到每个出发地的总平均延误</span>
+<span class="n">total_delays</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sums</span><span class="p">)</span>
+<span class="n">n_flights</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+<span class="n">mean</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">dask</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">total_delays</span> <span class="o">/</span> <span class="n">n_flights</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+CPU times: user 70.9 ms, sys: 5.36 ms, total: 76.3 ms
+Wall time: 405 ms
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">sums</span><span class="p">))</span><span class="o">.</span><span class="n">visualize</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="_images/03_dask.delayed_51_0.png" src="_images/03_dask.delayed_51_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># 确认结果仍然一致</span>
+<span class="n">mean</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Origin
+EWR    12.500968
+JFK          NaN
+LGA    10.169227
+Name: DepDelay, dtype: float64
+</pre></div></div>
+</div>
+</section>
+<section id="id13">
+<h3>几个值得思考的问题：<a class="headerlink" href="#id13" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>你获得了多少加速？这符合你的预期吗？</p></li>
+<li><p>试着改变调用 <code class="docutils literal notranslate"><span class="pre">compute</span></code> 的位置。对 <code class="docutils literal notranslate"><span class="pre">sums</span></code> 和 <code class="docutils literal notranslate"><span class="pre">counts</span></code> 调用会发生什么？等到 <code class="docutils literal notranslate"><span class="pre">mean</span></code> 再调用又会怎样？</p></li>
+<li><p>试着延迟对 <code class="docutils literal notranslate"><span class="pre">sum</span></code> 的调用。<code class="docutils literal notranslate"><span class="pre">sum</span></code> 被延迟时任务图是什么样？不延迟又是什么样？</p></li>
+<li><p>你能想到为什么有时会更想用某一种归约方式吗？</p></li>
+</ul>
+</section>
+<section id="进一步学习">
+<h3>进一步学习<a class="headerlink" href="#进一步学习" title="Link to this heading">#</a></h3>
+<p>请阅读 <a class="reference external" href="https://docs.dask.org/en/latest/delayed.html">Delayed 文档</a>。尤其是这个 <a class="reference external" href="https://www.youtube.com/watch?v=SHqFmynRxVU">delayed 视频</a>，可以巩固这里学到的概念；另外 <a class="reference external" href="https://docs.dask.org/en/latest/delayed-best-practices.html">delayed 最佳实践</a> 汇总了用好 <code class="docutils literal notranslate"><span class="pre">dask.delayed</span></code> 的建议。</p>
+</section>
+</section>
+<section id="关闭-Client">
+<h2>关闭 Client<a class="headerlink" href="#关闭-Client" title="Link to this heading">#</a></h2>
+<p>进入下一节练习之前，请关闭你的 client，或停止这个 kernel。</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="02_array.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Dask Arrays —— 并行化的 numpy</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="04_distributed.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Distributed —— 把数据和计算铺到集群上</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#一个典型工作流">一个典型工作流</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#基础">基础</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#用-dask.delayed-装饰器并行化">用 <code class="docutils literal notranslate"><span class="pre">dask.delayed</span></code> 装饰器并行化</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#刚才发生了什么？">刚才发生了什么？</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#几个值得思考的问题：">几个值得思考的问题：</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#练习：并行化-for-循环">练习：并行化 for 循环</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#练习：带控制流的-for-循环并行化">练习：带控制流的 for 循环并行化</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">几个值得思考的问题：</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#练习：并行化-Pandas-的-groupby-归约">练习：并行化 Pandas 的 groupby 归约</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#准备数据">准备数据</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#查看数据">查看数据</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#用-pandas.read_csv-读取一个文件，并计算平均起飞延误">用 <code class="docutils literal notranslate"><span class="pre">pandas.read_csv</span></code> 读取一个文件，并计算平均起飞延误</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#顺序代码：每个机场的平均起飞延误">顺序代码：每个机场的平均起飞延误</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#把上面的代码并行化">把上面的代码并行化</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">几个值得思考的问题：</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#进一步学习">进一步学习</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#关闭-Client">关闭 Client</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Dask Developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2018, Dask Developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
