@@ -5,8 +5,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - name: Derive a valid Docker image name
+      id: image
+      run: |
+        # repo2docker-action defaults IMAGE_NAME to $GITHUB_ACTOR/$repo.
+        # Bot actors such as cursor[bot] contain brackets, which Docker rejects.
+        # Always derive from the repository (owner/name): lowercase, keep
+        # [a-z0-9_./-], drop everything else. Works for human and bot commits.
+        image_name="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9_./-]+//g')"
+        if [ -z "${image_name}" ]; then
+          image_name="dask-tutorial-chinese"
+        fi
+        echo "name=${image_name}" >> "$GITHUB_OUTPUT"
+        echo "Using IMAGE_NAME=${image_name}"
+
     - name: Build and cache on mybinder.org
       uses: jupyterhub/repo2docker-action@master
       with:
         NO_PUSH: true
         MYBINDERORG_TAG: ${{ github.event.ref }}
+        IMAGE_NAME: ${{ steps.image.outputs.name }}
