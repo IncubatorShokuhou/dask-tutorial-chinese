@@ -1,0 +1,18 @@
+name: Comment with Binder link
+
+on: pull_request
+
+jobs:
+  binder_link_comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v1
+        with:
+          message: |
+            可以用这个 Binder 链接试用本次改动。[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/${{ github.event.pull_request.head.repo.full_name }}/${{ github.event.pull_request.head.sha }})
+          comment_includes: "Binder"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

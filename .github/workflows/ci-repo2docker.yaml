@@ -1,25 +1,31 @@
 name: repo2docker CI
-
 on: [push, pull_request]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+    - name: Derive a valid Docker image name
+      id: image
+      run: |
+        # repo2docker-action defaults IMAGE_NAME to $GITHUB_ACTOR/$repo.
+        # Bot actors such as cursor[bot] contain brackets, which Docker rejects.
+        # Always derive from the repository (owner/name): lowercase, keep
+        # [a-z0-9_./-], drop everything else. Works for human and bot commits.
+        image_name="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9_./-]+//g')"
+        if [ -z "${image_name}" ]; then
+          image_name="dask-tutorial-chinese"
+        fi
+        echo "name=${image_name}" >> "$GITHUB_OUTPUT"
+        echo "Using IMAGE_NAME=${image_name}"
 
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.7
-
-      - name: Install repo2docker
-        run: |
-          python -m pip install --upgrade pip
-          # Explicity adding `six` as a workaround for https://github.com/docker/docker-py/pull/2844
-          # Explicity adding `chardet` as a workaround for https://github.com/jupyterhub/repo2docker/issues/1065
-          python -m pip install jupyter-repo2docker six chardet
-
-      - name: Build dask-tutorial Docker image
-        run: jupyter-repo2docker --no-run --debug .
+    - name: Build Binder image
+      uses: jupyterhub/repo2docker-action@master
+      with:
+        NO_PUSH: true
+        IMAGE_NAME: ${{ steps.image.outputs.name }}
+        # Do not pass MYBINDERORG_TAG. On push events github.event.ref is a
+        # full refs/heads/... value; the action then curls mybinder.org and
+        # that extra step can fail (SSL) after a successful local image build.
+        # PRs already omit this input because github.event.ref is empty.
+        # The local repo2docker build is what validates the Binder environment.
