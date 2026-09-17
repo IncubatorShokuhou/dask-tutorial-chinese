@@ -19,9 +19,13 @@ jobs:
         echo "name=${image_name}" >> "$GITHUB_OUTPUT"
         echo "Using IMAGE_NAME=${image_name}"
 
-    - name: Build and cache on mybinder.org
+    - name: Build Binder image
       uses: jupyterhub/repo2docker-action@master
       with:
         NO_PUSH: true
-        MYBINDERORG_TAG: ${{ github.event.ref }}
         IMAGE_NAME: ${{ steps.image.outputs.name }}
+        # Do not pass MYBINDERORG_TAG. On push events github.event.ref is a
+        # full refs/heads/... value; the action then curls mybinder.org and
+        # that extra step can fail (SSL) after a successful local image build.
+        # PRs already omit this input because github.event.ref is empty.
+        # The local repo2docker build is what validates the Binder environment.
